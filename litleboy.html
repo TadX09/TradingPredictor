@@ -2,18 +2,18 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Trading Monitor</title>
+    <title>Trading Monitor</title>
     <style>
         body {
             font-family: monospace;
             background: #1a1a1a;
             color: #fff;
-            padding: 20px;
+            /* padding: 20px; */
             margin: 0;
             max-width: 100%;
         }
         h1 {
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            /* font-size: clamp(1.5rem, 4vw, 2.5rem); */
             text-align: center;
         }
         #output {
@@ -23,7 +23,7 @@
             min-height: 400px;
             background: #000;
             width: 100%;
-            height: 100vh;
+           
             max-width: 1200px;
             margin: 0 auto;
             box-sizing: border-box;
@@ -69,19 +69,19 @@
     </style>    
 </head>
 <body>
-    <div style="text-align: center; margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 8px; max-width: 800px; margin: 0 auto;">
-        <p style="margin: 0; color: #2196F3;">Created by Tadeo Sauceda</p>
-        <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time cryptocurrency trading monitor with predictive analysis</p>
+    <div style="text-align: center; margin: 20px 0; padding: 10px; background: #2a2a2a; border-radius: 8px; max-width: 800px; margin: 0 auto;">
+        <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time trading monitor with predictive analysis</p>
         <p style="margin: 5px 0; font-size: 1.1em; color: #4CAF50;">Currently Monitoring: EUR/USD Trading Pair</p>
-        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing 1-minute intervals for optimal trading signals</p>
+        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing 1-minute intervals for optimal trading signals</p> 
+         <p style="margin: 0; color: #2196F3;">Created by Tadeo Sauceda</p>
     </div>
-    <h1>Crypto Trading Monitor</h1>
+    <h1>Trading Monitor</h1>
     <div class="controls">
         <button onclick="onDemandPrediction()">Get Prediction</button>
         <button onclick="toggleMonitoring()" id="monitorBtn">Start Monitoring</button>
         <button onclick="clearOutput()">Clear Console</button>
     </div>
-    <div id="output"></div>
+    <div id="output" style="overflow-y: auto; height: calc(100vh - 250px); margin-bottom: 20px;"></div>
 
     <script>
         class BinanceTrader {
@@ -318,7 +318,7 @@
             <div class="card-header">
             <div class="timestamp" style="font-size: 0.8em;">🕒 ${new Date().toLocaleString()}</div>
             <div class="price-info">
-                <span class="price-value">$${prediction.price.toFixed(4)}</span>
+            <span class="price-value">$${prediction.price.toFixed(4)}</span>
             </div>
             </div>
             <div class="main-prediction ${predictionClass}">
@@ -327,9 +327,9 @@
             </div>
             <div class="confidence">
             <div class="confidence-wrapper">
-                <div class="confidence-bar" style="width: ${confidenceLevel}%">
-                <span class="confidence-value">${confidenceLevel.toFixed(1)}%</span>
-                </div>
+            <div class="confidence-bar" style="width: ${confidenceLevel}%">
+            <span class="confidence-value">${confidenceLevel.toFixed(1)}%</span>
+            </div>
             </div>
             </div>
             <div class="indicators-grid">
@@ -337,13 +337,13 @@
             <div class="indicator-box">MACD: ${prediction.macd.toFixed(4)}</div>
             </div>
             <div class="patterns-grid">
-                ${Object.entries(prediction.patterns)
-                .filter(([,present]) => present)
-                .map(([pattern]) => `
-                <div class="pattern-item">
-                ✅ ${pattern.replace(/([A-Z])/g, ' $1').trim()}
-                </div>
-                `).join('')}
+            ${Object.entries(prediction.patterns)
+            .filter(([,present]) => present)
+            .map(([pattern]) => `
+            <div class="pattern-item">
+            ✅ ${pattern.replace(/([A-Z])/g, ' $1').trim()}
+            </div>
+            `).join('')}
             </div>
             </div>
             `;
@@ -352,82 +352,106 @@
             const styles = `
             <style id="prediction-styles">
             .prediction-card {
-                background: linear-gradient(145deg, #1a1a1a 0%, #2a2a2a 100%);
-                border-radius: 10px;
-                padding: 12px;
-                margin: 10px 0;
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px 0;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 
+                   0 2px 8px rgba(255, 255, 255, 0.1),
+                   0 -2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            }
+            .prediction-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5),
+                   0 4px 12px rgba(255, 255, 255, 0.12),
+                   0 -2px 12px rgba(0, 0, 0, 0.3);
             }
             .card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
             }
             .price-value {
-                font-size: 1.2em;
-                color: #2196F3;
+            font-size: 1.2em;
+            color: #2196F3;
+            text-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
             }
             .main-prediction {
-                font-size: 1.5em;
-                font-weight: bold;
-                text-align: center;
-                padding: 10px;
-                border-radius: 8px;
-                margin: 10px 0;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
             }
             .main-prediction.buy-signal {
-                background: rgba(76, 175, 80, 0.1);
-                color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            text-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
             }
             .main-prediction.sell-signal {
-                background: rgba(244, 67, 54, 0.1);
-                color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            text-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
             }
             .confidence-wrapper {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 8px;
-                padding: 2px;
-                margin: 5px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 2px;
+            margin: 5px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
             }
             .confidence-bar {
-                height: 16px;
-                background: linear-gradient(90deg, #2196F3, #64B5F6);
-                border-radius: 6px;
-                position: relative;
+            height: 16px;
+            background: linear-gradient(90deg, #2196F3, #64B5F6);
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
             }
             .confidence-value {
-                position: absolute;
-                right: 8px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: white;
-                font-size: 0.8em;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 0.8em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             }
             .indicators-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                margin: 8px 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 8px 0;
             }
             .indicator-box {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 8px;
-                border-radius: 6px;
-                font-size: 0.9em;
-                text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2),
+                   inset 0 1px 2px rgba(255, 255, 255, 0.1);
             }
             .patterns-grid {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 6px;
-                margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
             }
             .pattern-item {
-                background: rgba(33, 150, 243, 0.1);
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 0.8em;
+            background: rgba(33, 150, 243, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s;
+            }
+            .pattern-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
             }
             </style>
             `;
@@ -473,6 +497,9 @@
                 }
 
                 monitoringInterval = setInterval(async () => {
+                    // Add keep alive message
+                    log('🔄 Checking for signals...', 'blue');
+                    
                     const prediction = await predictor.getPrediction();
                     if (prediction && prediction.confidence > 0.35) {
                         // Send notification if supported
