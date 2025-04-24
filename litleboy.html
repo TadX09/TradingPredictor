@@ -300,6 +300,7 @@
             const prediction = await predictor.getPrediction();
             if (prediction) {
                 displayPrediction(prediction);
+                showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
             }
         }
 
@@ -469,10 +470,13 @@
                 clearInterval(monitoringInterval);
                 btn.textContent = 'Start Monitoring';
                 
-                showAndroidToast("Start Monitoring");
+                showAndroidToast("Monitoring stopped");
+                log('Monitoring stopped', 'red');
                 btn.style.background = '#2a2a2a';
             } else {
                 predictor.monitoring = true;
+                showAndroidToast("Monitoring started");
+                log('Monitoring started', 'green');
                 btn.innerHTML = '<span class="spinner"></span> Monitoring...';
                 btn.style.background = '#4CAF50';
                 
@@ -513,6 +517,7 @@
                         const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
                         audio.play();
                         displayPrediction(prediction);
+                        showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
                     }
                 }, 10000);
             }
@@ -527,6 +532,7 @@
             document.getElementById('output').innerHTML = '';
         }
 
+        // Android interface for showing toast and notifications
         function showAndroidToast(toast) {
             try {
                 if (AndroidInterface && typeof AndroidInterface.showToast === 'function') {
@@ -536,6 +542,18 @@
                 }
             } catch (error) {
                 console.error('Error showing toast:', error);
+            }
+        }
+
+        function showNotificationAndroid(title, message) {
+            try {
+                if (AndroidInterface && typeof AndroidInterface.showNotification === 'function') {
+                    AndroidInterface.showNotification(title, message);
+                } else {
+                    console.log('AndroidInterface not available. Notification:', title, message);
+                }
+            } catch (error) {
+                console.error('Error showing notification:', error);
             }
         }
     </script>
