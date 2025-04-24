@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading Monitor</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+            max-width: 100%;
+        }
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            text-align: center;
+        }
+        #output {
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            min-height: 400px;
+            background: #000;
+            width: 100%;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+        .controls {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            cursor: pointer;
+            min-width: 150px;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+        }
+        button:hover {
+            background: #3a3a3a;
+        }
+        .green { color: #4CAF50; }
+        .red { color: #f44336; }
+        .yellow { color: #ffeb3b; }
+        .blue { color: #2196F3; }
+    
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            button {
+                width: 100%;
+                margin: 2px;
+            }
+            #output {
+                min-height: 300px;
+            }
+        }
+    </style>    
+</head>
+<body>
+    <div style="text-align: center; margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 8px; max-width: 800px; margin: 0 auto;">
+        <p style="margin: 0; color: #2196F3;">Created by Tadeo Sauceda</p>
+        <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time cryptocurrency trading monitor with predictive analysis</p>
+    </div>
+    <h1>Crypto Trading Monitor</h1>
+    <div class="controls">
+        <button onclick="onDemandPrediction()">Get Prediction</button>
+        <button onclick="toggleMonitoring()" id="monitorBtn">Start Monitoring</button>
+        <button onclick="clearOutput()">Clear Console</button>
+    </div>
+    <div id="output"></div>
+
+    <script>
+        class BinanceTrader {
+            constructor(apiKey, apiSecret) {
+                this.apiKey = apiKey;
+                this.apiSecret = apiSecret;
+            }
+
+            async getKlines(symbol, interval, limit) {
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+                console.log(`Fetching klines from Binance: ${url}`);
+                const response = await fetch(url);
+                return await response.json();
+            }
+        }
+
+        class TradingPredictor {
+            constructor(interval, symbol, apiKey, apiSecret) {
+                this.interval = interval;
+                this.symbol = symbol;
+                this.binanceTrader = new BinanceTrader(apiKey, apiSecret);
+                this.monitoring = false;
+            }
+
+        async getPrediction() {
+            try {
+                const klines = await this.binanceTrader.getKlines(this.symbol, this.interval, 200);
+                if (!Array.isArray(klines) || klines.length === 0) {
+                    throw new Error('Invalid klines data received');
+                }
+                const data = this.processKlines(klines);
+                if (!data.close || data.close.length < 2) {
+                    throw new Error('Insufficient price data');
+                }
+                
+                const currentPrice = parseFloat(data.close[data.close.length - 1]);
+                const prevPrice = parseFloat(data.close[data.close.length - 2]);
+                
+                // Calculate volume analysis
+                const volumeSMA = this.calculateSMA(data.volume, 20);
+                const currentVolumeRatio = data.volume[data.volume.length - 1] / volumeSMA[volumeSMA.length - 1];
+                
+                // Calculate RSI
+                const rsi = this.calculateRSI(data.close);
+                
+                // Calculate MACD
+                const macd = this.calculateMACD(data.close);
+                
+                // Detect patterns
+                const patterns = this.detectPatterns(data, data.close.length - 1);
+                
+                let confidence = 0.1; // Base confidence level
+                let prediction = 'hold';
+                
+                // Pattern-based predictions
+                if ((patterns.bullishEngulfing || patterns.hammer) && currentVolumeRatio > 1.5) {
+                    prediction = 'buy';
+                    confidence += 0.35;
+                } else if ((patterns.bearishEngulfing || patterns.shootingStar) && currentVolumeRatio > 1.5) {
+                    prediction = 'sell';
+                    confidence += 0.35;
+                }
+
+                // Volume breakout
+                if (currentVolumeRatio > 2.0) {
+                    if (currentPrice > prevPrice) {
+                        prediction = 'buy';
+                        confidence += 0.2;
+                    } else {
+                        prediction = 'sell';
+                        confidence += 0.2;
+                    }
+                }
+
+                // Doji analysis
+                if (patterns.doji && currentVolumeRatio > 1.3) {
+                    prediction = currentPrice > prevPrice ? 'buy' : 'sell';
+                    confidence += 0.25;
+                }
+
+                // RSI signals
+                if (rsi < 30 && prediction !== 'sell') {
+                    prediction = 'buy';
+                    confidence += 0.2;
+                } else if (rsi > 70 && prediction !== 'buy') {
+                    prediction = 'sell';
+                    confidence += 0.2;
+                }
+
+                // MACD signals
+                if (macd.macd > macd.signal && prediction !== 'sell') {
+                    prediction = 'buy';
+                    confidence += 0.15;
+                } else if (macd.macd < macd.signal && prediction !== 'buy') {
+                    prediction = 'sell';
+                    confidence += 0.15;
+                }
+
+                confidence = Math.min(confidence, 1.0);
+
+                return {
+                    prediction,
+                    confidence: Math.round(confidence * 100) / 100,
+                    price: currentPrice,
+                    priceChange: ((currentPrice - prevPrice) / prevPrice) * 100,
+                    rsi: Math.round(rsi * 100) / 100,
+                    macd: macd.macd,
+                    patterns
+                };
+            } catch (error) {
+                console.error('Error getting prediction:', error);
+                return null;
+            }
+        }
+
+        processKlines(klines) {
+            return {
+                open: klines.map(k => parseFloat(k[1])),
+                high: klines.map(k => parseFloat(k[2])),
+                low: klines.map(k => parseFloat(k[3])),
+                close: klines.map(k => parseFloat(k[4])),
+                volume: klines.map(k => parseFloat(k[5]))
+            };
+        }
+
+        calculateSMA(values, period) {
+            const result = [];
+            for (let i = period - 1; i < values.length; i++) {
+                const sum = values.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+                result.push(sum / period);
+            }
+            return result;
+        }
+
+        calculateRSI(prices, period = 14) {
+            if (prices.length < period + 1) {
+                return 50; // Default value when not enough data
+            }
+
+            const deltas = prices.slice(1).map((price, i) => price - prices[i]);
+            const gains = deltas.map(d => d > 0 ? d : 0);
+            const losses = deltas.map(d => d < 0 ? -d : 0);
+
+            let avgGain = gains.slice(0, period).reduce((a, b) => a + b) / period;
+            let avgLoss = losses.slice(0, period).reduce((a, b) => a + b) / period;
+
+            // Calculate smoothed averages
+            for (let i = period; i < gains.length; i++) {
+                avgGain = (avgGain * (period - 1) + gains[i]) / period;
+                avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+            }
+
+            const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        calculateMACD(prices) {
+            const ema12 = this.calculateEMA(prices, 12);
+            const ema26 = this.calculateEMA(prices, 26);
+            const macdLine = ema12 - ema26;
+            const signalLine = this.calculateEMA([macdLine], 9);
+            
+            return {
+                macd: macdLine,
+                signal: signalLine
+            };
+        }
+
+        calculateEMA(prices, period) {
+            const multiplier = 2 / (period + 1);
+            let ema = prices[0];
+            
+            for (let i = 1; i < prices.length; i++) {
+                ema = (prices[i] - ema) * multiplier + ema;
+            }
+            return ema;
+        }
+
+        detectPatterns(data, index) {
+            const open = data.open[index];
+            const close = data.close[index];
+            const high = data.high[index];
+            const low = data.low[index];
+            const prevOpen = data.open[index - 1];
+            const prevClose = data.close[index - 1];
+            
+            const body = Math.abs(close - open);
+            const upperShadow = high - Math.max(open, close);
+            const lowerShadow = Math.min(open, close) - low;
+            
+            return {
+                doji: body <= (high - low) * 0.1,
+                hammer: lowerShadow > body * 2 && upperShadow <= body * 0.1,
+                shootingStar: upperShadow > body * 2 && lowerShadow <= body * 0.1,
+                bullishEngulfing: close > open && prevClose < prevOpen && open < prevClose && close > prevOpen,
+                bearishEngulfing: close < open && prevClose > prevOpen && open > prevClose && close < prevOpen
+            };
+        }
+    }
+        
+        // Initialize predictor
+        const predictor = new TradingPredictor(
+            '1m', 
+            'EURUSDT',
+            'your-api-key',
+            'your-api-secret'
+        );
+
+        function log(message, color = '') {
+            const output = document.getElementById('output');
+            output.innerHTML += `<div class="${color}">${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function onDemandPrediction() {
+            const prediction = await predictor.getPrediction();
+            if (prediction) {
+                displayPrediction(prediction);
+            }
+        }
+
+        function displayPrediction(prediction) {
+            if (!prediction) {
+                log('Error: Unable to generate prediction', 'red');
+                return;
+            }
+            log('★'.repeat(50), 'blue');
+            log(`Time: ${new Date().toLocaleString()}`);
+            log(`Price: $${prediction.price}`);
+            log(`Prediction: ${prediction.prediction.toUpperCase()}`, 
+                prediction.prediction === 'buy' ? 'green' : 'red');
+            log(`Confidence: ${prediction.confidence * 100}%`);
+            log(`RSI: ${prediction.rsi}`);
+            log(`MACD: ${prediction.macd}`);
+            log('Pattern Confirmations:');
+            Object.entries(prediction.patterns).forEach(([pattern, present]) => {
+                log(`  ${pattern}: ${present ? '✓' : '✗'}`, present ? 'green' : 'red');
+            });
+            log('★'.repeat(50), 'blue');
+        }
+
+        let monitoringInterval;
+        function toggleMonitoring() {
+            const btn = document.getElementById('monitorBtn');
+            if (predictor.monitoring) {
+                predictor.monitoring = false;
+                clearInterval(monitoringInterval);
+                btn.textContent = 'Start Monitoring';
+            } else {
+                predictor.monitoring = true;
+                btn.textContent = 'Stop Monitoring';
+                monitoringInterval = setInterval(async () => {
+                    const prediction = await predictor.getPrediction();
+                    if (prediction && prediction.confidence > 0.35) {
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
+                        audio.play();
+                        displayPrediction(prediction);
+                    }
+                }, 10000);
+            }
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
