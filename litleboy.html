@@ -72,6 +72,8 @@
     <div style="text-align: center; margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 8px; max-width: 800px; margin: 0 auto;">
         <p style="margin: 0; color: #2196F3;">Created by Tadeo Sauceda</p>
         <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time cryptocurrency trading monitor with predictive analysis</p>
+        <p style="margin: 5px 0; font-size: 1.1em; color: #4CAF50;">Currently Monitoring: EUR/USD Trading Pair</p>
+        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing 1-minute intervals for optimal trading signals</p>
     </div>
     <h1>Crypto Trading Monitor</h1>
     <div class="controls">
@@ -325,46 +327,56 @@
         function toggleMonitoring() {
             const btn = document.getElementById('monitorBtn');
             if (predictor.monitoring) {
-            predictor.monitoring = false;
-            clearInterval(monitoringInterval);
-            btn.textContent = 'Start Monitoring';
-            btn.style.background = '#2a2a2a';
+                predictor.monitoring = false;
+                clearInterval(monitoringInterval);
+                btn.textContent = 'Start Monitoring';
+                btn.style.background = '#2a2a2a';
             } else {
-            predictor.monitoring = true;
-            btn.innerHTML = '<span class="spinner"></span> Monitoring...';
-            btn.style.background = '#4CAF50';
-            
-            // Add loading spinner style if not already present
-            if (!document.querySelector('style#spinnerStyle')) {
-                const style = document.createElement('style');
-                style.id = 'spinnerStyle';
-                style.textContent = `
-                .spinner {
-                    display: inline-block;
-                    width: 12px;
-                    height: 12px;
-                    border: 2px solid #ffffff;
-                    border-top: 2px solid transparent;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin-right: 5px;
+                predictor.monitoring = true;
+                btn.innerHTML = '<span class="spinner"></span> Monitoring...';
+                btn.style.background = '#4CAF50';
+                
+                // Add loading spinner style if not already present
+                if (!document.querySelector('style#spinnerStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'spinnerStyle';
+                    style.textContent = `
+                    .spinner {
+                        display: inline-block;
+                        width: 12px;
+                        height: 12px;
+                        border: 2px solid #ffffff;
+                        border-top: 2px solid transparent;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin-right: 5px;
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }`;
+                    document.head.appendChild(style);
                 }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                `;
-                document.head.appendChild(style);
-            }
 
-            monitoringInterval = setInterval(async () => {
-                const prediction = await predictor.getPrediction();
-                if (prediction && prediction.confidence > 0.35) {
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
-                audio.play();
-                displayPrediction(prediction);
-                }
-            }, 10000);
+                monitoringInterval = setInterval(async () => {
+                    const prediction = await predictor.getPrediction();
+                    if (prediction && prediction.confidence > 0.35) {
+                        // Send notification if supported
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification('Trading Signal', {
+                                body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
+                            });
+                        }
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
+                        audio.play();
+                        displayPrediction(prediction);
+                    }
+                }, 10000);
+            }
+            
+            // Request notification permission if not granted
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission();
             }
         }
 
