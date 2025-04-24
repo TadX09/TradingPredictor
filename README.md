@@ -1,0 +1,2 @@
+# TradingPredictor
+Predictor USD/EURO
