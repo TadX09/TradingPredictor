@@ -529,8 +529,8 @@
 
         function showAndroidToast(toast) {
             try {
-                if (window.AndroidInterface && typeof window.AndroidInterface.showToast === 'function') {
-                    window.AndroidInterface.showToast(toast);
+                if (AndroidInterface && typeof AndroidInterface.showToast === 'function') {
+                    AndroidInterface.showToast(toast);
                 } else {
                     console.log('AndroidInterface not available. Toast:', toast);
                 }
