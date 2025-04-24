@@ -305,22 +305,136 @@
 
         function displayPrediction(prediction) {
             if (!prediction) {
-                log('Error: Unable to generate prediction', 'red');
-                return;
+            log('<div class="error-message">⚠️ Error: Unable to generate prediction</div>', 'red');
+            return;
             }
-            log('★'.repeat(50), 'blue');
-            log(`Time: ${new Date().toLocaleString()}`);
-            log(`Price: $${prediction.price}`);
-            log(`Prediction: ${prediction.prediction.toUpperCase()}`, 
-                prediction.prediction === 'buy' ? 'green' : 'red');
-            log(`Confidence: ${prediction.confidence * 100}%`);
-            log(`RSI: ${prediction.rsi}`);
-            log(`MACD: ${prediction.macd}`);
-            log('Pattern Confirmations:');
-            Object.entries(prediction.patterns).forEach(([pattern, present]) => {
-                log(`  ${pattern}: ${present ? '✓' : '✗'}`, present ? 'green' : 'red');
-            });
-            log('★'.repeat(50), 'blue');
+
+            const predictionClass = prediction.prediction === 'buy' ? 'buy-signal' : 'sell-signal';
+            const confidenceLevel = prediction.confidence * 100;
+            const confidenceEmoji = confidenceLevel > 70 ? '🌟' : confidenceLevel > 50 ? '✨' : '⚠️';
+
+            const predictionCard = `
+            <div class="prediction-card ${predictionClass}">
+            <div class="card-header">
+            <div class="timestamp" style="font-size: 0.8em;">🕒 ${new Date().toLocaleString()}</div>
+            <div class="price-info">
+                <span class="price-value">$${prediction.price.toFixed(4)}</span>
+            </div>
+            </div>
+            <div class="main-prediction ${predictionClass}">
+            ${prediction.prediction === 'buy' ? '📈' : '📉'} 
+            ${prediction.prediction.toUpperCase()}
+            </div>
+            <div class="confidence">
+            <div class="confidence-wrapper">
+                <div class="confidence-bar" style="width: ${confidenceLevel}%">
+                <span class="confidence-value">${confidenceLevel.toFixed(1)}%</span>
+                </div>
+            </div>
+            </div>
+            <div class="indicators-grid">
+            <div class="indicator-box">RSI: ${prediction.rsi.toFixed(2)}</div>
+            <div class="indicator-box">MACD: ${prediction.macd.toFixed(4)}</div>
+            </div>
+            <div class="patterns-grid">
+                ${Object.entries(prediction.patterns)
+                .filter(([,present]) => present)
+                .map(([pattern]) => `
+                <div class="pattern-item">
+                ✅ ${pattern.replace(/([A-Z])/g, ' $1').trim()}
+                </div>
+                `).join('')}
+            </div>
+            </div>
+            `;
+
+            if (!document.querySelector('style#prediction-styles')) {
+            const styles = `
+            <style id="prediction-styles">
+            .prediction-card {
+                background: linear-gradient(145deg, #1a1a1a 0%, #2a2a2a 100%);
+                border-radius: 10px;
+                padding: 12px;
+                margin: 10px 0;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            }
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .price-value {
+                font-size: 1.2em;
+                color: #2196F3;
+            }
+            .main-prediction {
+                font-size: 1.5em;
+                font-weight: bold;
+                text-align: center;
+                padding: 10px;
+                border-radius: 8px;
+                margin: 10px 0;
+            }
+            .main-prediction.buy-signal {
+                background: rgba(76, 175, 80, 0.1);
+                color: #4CAF50;
+            }
+            .main-prediction.sell-signal {
+                background: rgba(244, 67, 54, 0.1);
+                color: #f44336;
+            }
+            .confidence-wrapper {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 8px;
+                padding: 2px;
+                margin: 5px 0;
+            }
+            .confidence-bar {
+                height: 16px;
+                background: linear-gradient(90deg, #2196F3, #64B5F6);
+                border-radius: 6px;
+                position: relative;
+            }
+            .confidence-value {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: white;
+                font-size: 0.8em;
+            }
+            .indicators-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin: 8px 0;
+            }
+            .indicator-box {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 8px;
+                border-radius: 6px;
+                font-size: 0.9em;
+                text-align: center;
+            }
+            .patterns-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 8px;
+            }
+            .pattern-item {
+                background: rgba(33, 150, 243, 0.1);
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.8em;
+            }
+            </style>
+            `;
+            document.head.insertAdjacentHTML('beforeend', styles);
+            }
+
+            log(predictionCard);
         }
 
         let monitoringInterval;
