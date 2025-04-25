@@ -490,68 +490,108 @@
         }
 
         let monitoringInterval;
+        let countdownInterval;
+        let timeLeft = 60;  // 60 seconds = 1 minute
+
+        function updateCountdown() {
+            const output = document.getElementById('output');
+            // Create or update countdown element
+            let countdownElement = document.getElementById('countdown');
+            if (!countdownElement) {
+            countdownElement = document.createElement('div');
+            countdownElement.id = 'countdown';
+            countdownElement.style.position = 'sticky';
+            countdownElement.style.top = '0';
+            countdownElement.style.backgroundColor = '#312f2f';
+            countdownElement.style.padding = '5px';
+            countdownElement.style.textAlign = 'center';
+            countdownElement.style.borderBottom = '1px solid #444';
+            output.insertBefore(countdownElement, output.firstChild);
+            }
+            countdownElement.innerHTML = `Auto-clear in: ${timeLeft}s`;
+            countdownElement.style.color = timeLeft <= 10 ? '#f44336' : '#fff';
+
+            timeLeft--;
+            if (timeLeft < 0) {
+            clearOutput();
+            timeLeft = 60;  // Reset timer
+            // Recreate countdown element after clear
+            updateCountdown();
+            }
+        }
+
         function toggleMonitoring() {
             const btn = document.getElementById('monitorBtn');
             if (predictor.monitoring) {
-                predictor.monitoring = false;
-                clearInterval(monitoringInterval);
-                btn.textContent = 'Start Monitoring';
-                
-                showAndroidToast("Monitoring stopped");
-                log('Monitoring stopped', 'red');
-                btn.style.background = '#2a2a2a';
-            } else {
-                predictor.monitoring = true;
-                showAndroidToast("Monitoring started");
-                log('Monitoring started', 'green');
-                btn.innerHTML = '<span class="spinner"></span> Monitoring...';
-                btn.style.background = '#4CAF50';
-                
-                // Add loading spinner style if not already present
-                if (!document.querySelector('style#spinnerStyle')) {
-                    const style = document.createElement('style');
-                    style.id = 'spinnerStyle';
-                    style.textContent = `
-                    .spinner {
-                        display: inline-block;
-                        width: 12px;
-                        height: 12px;
-                        border: 2px solid #ffffff;
-                        border-top: 2px solid transparent;
-                        border-radius: 50%;
-                        animation: spin 1s linear infinite;
-                        margin-right: 5px;
-                    }
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }`;
-                    document.head.appendChild(style);
-                }
+            predictor.monitoring = false;
+            clearInterval(monitoringInterval);
+            clearInterval(countdownInterval);
+            btn.textContent = 'Start Monitoring';
+            
+            showAndroidToast("Monitoring stopped");
+            log('Monitoring stopped', 'red');
+            btn.style.background = '#2a2a2a';
 
-                monitoringInterval = setInterval(async () => {
-                    // Add keep alive message
-                    log('🔄 Checking for signals...', 'blue');
-                    
-                    const prediction = await predictor.getPrediction();
-                    if (prediction && prediction.confidence > 0.35) {
-                        // Send notification if supported
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            new Notification('Trading Signal', {
-                                body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
-                            });
-                        }
-                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
-                        audio.play();
-                        displayPrediction(prediction);
-                        showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
-                    }
-                }, 10000);
+            // Remove countdown element when stopping
+            const countdownElement = document.getElementById('countdown');
+            if (countdownElement) {
+                countdownElement.remove();
+            }
+            } else {
+            predictor.monitoring = true;
+            showAndroidToast("Monitoring started");
+            log('Monitoring started', 'green');
+            btn.innerHTML = '<span class="spinner"></span> Monitoring...';
+            btn.style.background = '#4CAF50';
+            
+            // Initialize countdown
+            timeLeft = 60;
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+            
+            // Add loading spinner style if not already present
+            if (!document.querySelector('style#spinnerStyle')) {
+                const style = document.createElement('style');
+                style.id = 'spinnerStyle';
+                style.textContent = `
+                .spinner {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border: 2px solid #ffffff;
+                border-top: 2px solid transparent;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-right: 5px;
+                }
+                @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+                }`;
+                document.head.appendChild(style);
+            }
+
+            monitoringInterval = setInterval(async () => {
+                log('🔄 Checking for signals...', 'blue');
+                
+                const prediction = await predictor.getPrediction();
+                if (prediction && prediction.confidence > 0.35) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Trading Signal', {
+                    body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
+                    });
+                }
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
+                audio.play();
+                displayPrediction(prediction);
+                showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
+                }
+            }, 10000);
             }
             
             // Request notification permission if not granted
             if ('Notification' in window && Notification.permission !== 'granted') {
-                Notification.requestPermission();
+            Notification.requestPermission();
             }
         }
 
