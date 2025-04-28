@@ -69,6 +69,7 @@
     </style>    
 </head>
 <body>
+  
     <div style="text-align: center; margin: 20px 0; padding: 10px; background: #2a2a2a; border-radius: 8px; max-width: 800px; margin: 0 auto;">
         <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time trading monitor with predictive analysis</p>
         <p style="margin: 5px 0; font-size: 1.1em; color: #4CAF50;">Currently Monitoring: EUR/USD Trading Pair</p>
@@ -91,6 +92,9 @@
         </div> -->
     </footer>
     <script>
+
+
+
         class BinanceTrader {
             constructor(apiKey, apiSecret) {
                 this.apiKey = apiKey;
@@ -107,141 +111,166 @@
 
         class TradingPredictor {
             constructor(interval, symbol, apiKey, apiSecret) {
-                this.interval = interval;
-                this.symbol = symbol;
-                this.binanceTrader = new BinanceTrader(apiKey, apiSecret);
-                this.monitoring = false;
+            this.interval = interval;
+            this.symbol = symbol;
+            this.binanceTrader = new BinanceTrader(apiKey, apiSecret);
+            this.monitoring = false;
             }
 
         async getPrediction() {
             try {
-                const klines = await this.binanceTrader.getKlines(this.symbol, this.interval, 200);
-                if (!Array.isArray(klines) || klines.length === 0) {
-                    throw new Error('Invalid klines data received');
-                }
-                const data = this.processKlines(klines);
-                if (!data.close || data.close.length < 2) {
-                    throw new Error('Insufficient price data');
-                }
-                
-                const currentPrice = parseFloat(data.close[data.close.length - 1]);
-                const prevPrice = parseFloat(data.close[data.close.length - 2]);
-                
-                // Calculate volume analysis
-                const volumeSMA = this.calculateSMA(data.volume, 20);
-                const currentVolumeRatio = data.volume[data.volume.length - 1] / volumeSMA[volumeSMA.length - 1];
-                
-                // Calculate RSI
-                const rsi = this.calculateRSI(data.close);
-                
-                // Calculate MACD
-                const macd = this.calculateMACD(data.close);
-                
-                // Detect patterns
-                const patterns = this.detectPatterns(data, data.close.length - 1);
-                
-                let confidence = 0.1; // Base confidence level
-                let prediction = 'hold';
-                
-                // Pattern-based predictions
-                if ((patterns.bullishEngulfing || patterns.hammer) && currentVolumeRatio > 1.5) {
-                    prediction = 'buy';
-                    confidence += 0.35;
-                } else if ((patterns.bearishEngulfing || patterns.shootingStar) && currentVolumeRatio > 1.5) {
-                    prediction = 'sell';
-                    confidence += 0.35;
-                }
+            const klines = await this.binanceTrader.getKlines(this.symbol, this.interval, 200);
+            if (!klines?.length) throw new Error('Invalid klines data');
 
-                // Volume breakout
-                if (currentVolumeRatio > 2.0) {
-                    if (currentPrice > prevPrice) {
-                        prediction = 'buy';
-                        confidence += 0.2;
-                    } else {
-                        prediction = 'sell';
-                        confidence += 0.2;
-                    }
-                }
+            const data = this.processKlines(klines);
+            if (data.close.length < 2) throw new Error('Insufficient price data');
 
-                // Doji analysis
-                if (patterns.doji && currentVolumeRatio > 1.3) {
-                    prediction = currentPrice > prevPrice ? 'buy' : 'sell';
-                    confidence += 0.25;
-                }
+            const lastIndex = data.close.length - 1;
+            const currentPrice = data.close[lastIndex];
+            const prevPrice = data.close[lastIndex - 1];
 
-                // RSI signals
-                if (rsi < 30 && prediction !== 'sell') {
-                    prediction = 'buy';
-                    confidence += 0.2;
-                } else if (rsi > 70 && prediction !== 'buy') {
-                    prediction = 'sell';
-                    confidence += 0.2;
-                }
+            // Calculate indicators
+            const volumeSMA = this.calculateSMA(data.volume, 20);
+            const volumeRatio = data.volume[lastIndex] / volumeSMA[volumeSMA.length - 1];
+            const rsi = this.calculateRSI(data.close);
+            const macd = this.calculateMACD(data.close);
+            const patterns = this.detectPatterns(data, lastIndex);
 
-                // MACD signals
-                if (macd.macd > macd.signal && prediction !== 'sell') {
-                    prediction = 'buy';
-                    confidence += 0.15;
-                } else if (macd.macd < macd.signal && prediction !== 'buy') {
-                    prediction = 'sell';
-                    confidence += 0.15;
-                }
+            // Scoring system for predictions
+            let score = 0;
+            let prediction = 'hold';
 
-                confidence = Math.min(confidence, 1.0);
+            // HOLD conditions
+            const isRSINeutral = rsi >= 45 && rsi <= 55;
+            const isLowVolume = volumeRatio < 1.2;
+            const isMACDNeutral = Math.abs(macd.macd - macd.signal) < 0.00001;
+            const isDoji = patterns.doji;
 
-                return {
-                    prediction,
-                    confidence: Math.round(confidence * 100) / 100,
-                    price: currentPrice,
-                    priceChange: ((currentPrice - prevPrice) / prevPrice) * 100,
-                    rsi: Math.round(rsi * 100) / 100,
-                    macd: macd.macd,
-                    patterns
-                };
+            // Apply HOLD if market is ranging or signals are weak
+            if ((isRSINeutral && isLowVolume) || (isMACDNeutral && isDoji)) {
+            return {
+                prediction: 'hold',
+                confidence: 0.5,
+                price: currentPrice,
+                priceChange: Number(((currentPrice - prevPrice) / prevPrice * 100).toFixed(2)),
+                rsi: Number(rsi.toFixed(2)),
+                macd: Number(macd.macd.toExponential(6)),
+                patterns
+            };
+            }
+
+            // Pattern analysis
+            if (volumeRatio > 1.5) {
+            if (patterns.bullishEngulfing || patterns.hammer) {
+            prediction = 'buy';
+            score += 35;
+            } else if (patterns.bearishEngulfing || patterns.shootingStar) {
+            prediction = 'sell';
+            score += 35;
+            }
+            }
+
+            // Volume breakout
+            if (volumeRatio > 2.0) {
+            prediction = currentPrice > prevPrice ? 'buy' : 'sell';
+            score += 20;
+            }
+
+            // Doji with volume
+            if (patterns.doji && volumeRatio > 1.3) {
+            prediction = currentPrice > prevPrice ? 'buy' : 'sell';
+            score += 25;
+            }
+
+            // RSI extremes with improved thresholds
+            if (rsi < 35 && prediction !== 'sell') {
+            prediction = 'buy';
+            score += 20;
+            } else if (rsi > 65 && prediction !== 'buy') {
+            prediction = 'sell';
+            score += 20;
+            }
+
+            // MACD crossover
+            if (macd.macd > macd.signal && prediction !== 'sell') {
+            prediction = 'buy';
+            score += 15;
+            } else if (macd.macd < macd.signal && prediction !== 'buy') {
+            prediction = 'sell';
+            score += 15;
+            }
+
+            // Set HOLD if confidence is too low
+            const confidence = Math.min(score / 100, 1.0);
+            if (confidence < 0.4) {
+            prediction = 'hold';
+            }
+
+            return {
+            prediction,
+            confidence: Number(confidence.toFixed(2)),
+            price: currentPrice,
+            priceChange: Number(((currentPrice - prevPrice) / prevPrice * 100).toFixed(2)),
+            rsi: Number(rsi.toFixed(2)),
+            macd: Number(macd.macd.toExponential(6)),
+            patterns
+            };
             } catch (error) {
-                console.error('Error getting prediction:', error);
-                return null;
+            console.error('Prediction error:', error);
+            return null;
             }
         }
 
         processKlines(klines) {
             return {
-                open: klines.map(k => parseFloat(k[1])),
-                high: klines.map(k => parseFloat(k[2])),
-                low: klines.map(k => parseFloat(k[3])),
-                close: klines.map(k => parseFloat(k[4])),
-                volume: klines.map(k => parseFloat(k[5]))
+            open: klines.map(k => parseFloat(k[1])),
+            high: klines.map(k => parseFloat(k[2])),
+            low: klines.map(k => parseFloat(k[3])),
+            close: klines.map(k => parseFloat(k[4])),
+            volume: klines.map(k => parseFloat(k[5]))
             };
         }
 
         calculateSMA(values, period) {
             const result = [];
             for (let i = period - 1; i < values.length; i++) {
-                const sum = values.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-                result.push(sum / period);
+            const sum = values.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+            result.push(sum / period);
             }
             return result;
         }
 
         calculateRSI(prices, period = 14) {
-            if (prices.length < period + 1) {
-                return 50; // Default value when not enough data
+            if (prices.length < period + 1) return 50;
+
+            const changes = [];
+            for (let i = 1; i < prices.length; i++) {
+                changes.push(prices[i] - prices[i - 1]);
             }
 
-            const deltas = prices.slice(1).map((price, i) => price - prices[i]);
-            const gains = deltas.map(d => d > 0 ? d : 0);
-            const losses = deltas.map(d => d < 0 ? -d : 0);
+            let gains = [];
+            let losses = [];
 
-            let avgGain = gains.slice(0, period).reduce((a, b) => a + b) / period;
-            let avgLoss = losses.slice(0, period).reduce((a, b) => a + b) / period;
-
-            // Calculate smoothed averages
-            for (let i = period; i < gains.length; i++) {
-                avgGain = (avgGain * (period - 1) + gains[i]) / period;
-                avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+            for (let i = 0; i < changes.length; i++) {
+                gains.push(changes[i] > 0 ? changes[i] : 0);
+                losses.push(changes[i] < 0 ? Math.abs(changes[i]) : 0);
             }
 
-            const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+            // Calculate initial SMA for gains and losses
+            let avgGain = gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period;
+            let avgLoss = losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period;
+
+            // Calculate subsequent values using Wilder's smoothing
+            for (let i = period; i < changes.length; i++) {
+                avgGain = ((avgGain * (period - 1)) + gains[i]) / period;
+                avgLoss = ((avgLoss * (period - 1)) + losses[i]) / period;
+            }
+
+            if (avgLoss === 0) {
+                return avgGain === 0 ? 50 : 100;
+            }
+            
+            const rs = avgGain / avgLoss;
             return 100 - (100 / (1 + rs));
         }
 
@@ -252,8 +281,8 @@
             const signalValues = this.calculateEMA(macdValues, 9);
             
             return {
-                macd: macdValues[macdValues.length - 1],
-                signal: signalValues[signalValues.length - 1]
+            macd: macdValues[macdValues.length - 1],
+            signal: signalValues[signalValues.length - 1]
             };
         }
 
@@ -262,8 +291,8 @@
             const emaValues = [prices[0]];
             
             for (let i = 1; i < prices.length; i++) {
-                const ema = (prices[i] - emaValues[i-1]) * multiplier + emaValues[i-1];
-                emaValues.push(ema);
+            const ema = (prices[i] - emaValues[i-1]) * multiplier + emaValues[i-1];
+            emaValues.push(ema);
             }
             return emaValues;
         }
@@ -281,15 +310,14 @@
             const lowerShadow = Math.min(open, close) - low;
             
             return {
-                doji: body <= (high - low) * 0.1,
-                hammer: lowerShadow > body * 2 && upperShadow <= body * 0.1,
-                shootingStar: upperShadow > body * 2 && lowerShadow <= body * 0.1,
-                bullishEngulfing: close > open && prevClose < prevOpen && open < prevClose && close > prevOpen,
-                bearishEngulfing: close < open && prevClose > prevOpen && open > prevClose && close < prevOpen
+            doji: body <= (high - low) * 0.1,
+            hammer: lowerShadow > body * 2 && upperShadow <= body * 0.1,
+            shootingStar: upperShadow > body * 2 && lowerShadow <= body * 0.1,
+            bullishEngulfing: close > open && prevClose < prevOpen && open < prevClose && close > prevOpen,
+            bearishEngulfing: close < open && prevClose > prevOpen && open > prevClose && close < prevOpen
             };
         }
-    }
-        
+        }
         // Initialize predictor
         const predictor = new TradingPredictor(
             '1m', 
@@ -317,7 +345,17 @@
             return;
             }
 
-            const predictionClass = prediction.prediction === 'buy' ? 'buy-signal' : 'sell-signal';
+            // Add hold condition
+            const getPredictionClass = (pred) => {
+            switch(pred) {
+                case 'buy': return 'buy-signal';
+                case 'sell': return 'sell-signal';
+                case 'hold': return 'hold-signal';
+                default: return '';
+            }
+            };
+
+            const predictionClass = getPredictionClass(prediction.prediction);
             const confidenceLevel = prediction.confidence * 100;
             const confidenceEmoji = confidenceLevel > 70 ? '🌟' : confidenceLevel > 50 ? '✨' : '⚠️';
 
@@ -325,6 +363,15 @@
             if (level >= 70) return 'linear-gradient(90deg, #4CAF50, #81C784)'; // Green
             if (level >= 40) return 'linear-gradient(90deg, #FFC107, #FFD54F)'; // Yellow
             return 'linear-gradient(90deg, #f44336, #E57373)'; // Red
+            };
+
+            const getPredictionEmoji = (pred) => {
+            switch(pred) {
+                case 'buy': return '📈';
+                case 'sell': return '📉';
+                case 'hold': return '⏸️';
+                default: return '❓';
+            }
             };
 
             const predictionCard = `
@@ -336,7 +383,7 @@
             </div>
             </div>
             <div class="main-prediction ${predictionClass}">
-            ${prediction.prediction === 'buy' ? '📈' : '📉'} 
+            ${getPredictionEmoji(prediction.prediction)} 
             ${prediction.prediction.toUpperCase()}
             </div>
             <div class="confidence">
@@ -348,20 +395,20 @@
             </div>
             <div class="indicators-grid">
             <div class="indicator-box" style="color: ${
-                prediction.rsi > 70 ? '#f44336' :  // Overbought - Red
-                prediction.rsi < 30 ? '#4CAF50' :  // Oversold - Green
-                '#FFD700'                         // Neutral - Gold
+            prediction.rsi > 70 ? '#f44336' :  // Overbought - Red
+            prediction.rsi < 30 ? '#4CAF50' :  // Oversold - Green
+            '#FFD700'                         // Neutral - Gold
             }">
-                RSI: ${prediction.rsi ? prediction.rsi.toFixed(2) : 'N/A'} 
-                ${prediction.rsi > 70 ? '⚠️' : prediction.rsi < 30 ? '✅' : '➖'}
+            RSI: ${prediction.rsi ? prediction.rsi.toFixed(2) : 'N/A'} 
+            ${prediction.rsi > 70 ? '⚠️' : prediction.rsi < 30 ? '✅' : '➖'}
             </div>
             <div class="indicator-box" style="color: ${
-                prediction.macd > 0 ? '#4CAF50' :  // Bullish - Green
-                prediction.macd < 0 ? '#f44336' :  // Bearish - Red
-                '#FFD700'                         // Neutral - Gold
+            prediction.macd > 0 ? '#4CAF50' :  // Bullish - Green
+            prediction.macd < 0 ? '#f44336' :  // Bearish - Red
+            '#FFD700'                         // Neutral - Gold
             }">
-                MACD: ${prediction.macd ? prediction.macd.toFixed(6) : 'N/A'}
-                ${prediction.macd > 0 ? '📈' : prediction.macd < 0 ? '📉' : '➖'}
+            MACD: ${prediction.macd ? prediction.macd.toFixed(6) : 'N/A'}
+            ${prediction.macd > 0 ? '📈' : prediction.macd < 0 ? '📉' : '➖'}
             </div>
             </div>
             <div class="patterns-grid">
@@ -424,6 +471,11 @@
             background: rgba(244, 67, 54, 0.1);
             color: #f44336;
             text-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+            }
+            .main-prediction.hold-signal {
+            background: rgba(255, 193, 7, 0.1);
+            color: #FFC107;
+            text-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
             }
             .confidence-wrapper {
             background: rgba(0, 0, 0, 0.2);
@@ -575,16 +627,18 @@
                 log('🔄 Checking for signals...', 'blue');
                 
                 const prediction = await predictor.getPrediction();
-                if (prediction && prediction.confidence > 0.35) {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification('Trading Signal', {
-                    body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
-                    });
-                }
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
-                audio.play();
-                displayPrediction(prediction);
-                showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
+                if (prediction && prediction.confidence > 0.35 && prediction.prediction !== 'hold') {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('Trading Signal', {
+                            body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
+                        });
+                    }
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
+                    audio.play();
+                    displayPrediction(prediction);
+                    showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
+                } else {
+                    displayPrediction(prediction);
                 }
             }, 10000);
             }
