@@ -69,20 +69,19 @@
     </style>    
 </head>
 <body>
-  
-    <div style="text-align: center; margin: 20px 0; padding: 10px; background: #2a2a2a; border-radius: 8px; max-width: 800px; margin: 0 auto;">
-        <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time trading monitor with predictive analysis</p>
-        <p style="margin: 5px 0; font-size: 1.1em; color: #4CAF50;">Currently Monitoring: EUR/USD Trading Pair</p>
-        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing 1-minute intervals for optimal trading signals</p> 
-    </div>
+
     <h1 style="color: #4CAF50; text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);">Trading Monitor</h1>
     <div class="controls" style="background: #2a2a2a; padding: 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
         <button onclick="onDemandPrediction()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Get Prediction</button>
         <button onclick="toggleMonitoring()" id="monitorBtn" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Start Monitoring</button>
         <button onclick="clearOutput()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Clear Console</button>
     </div>
+    <div id="countdown-container"></div>
     <div id="output" style="overflow-y: auto; height: calc(100vh - 250px); margin-bottom: 20px;"></div>
     <footer style="text-align: center; padding: 20px; background: #2a2a2a; margin-top: 20px; border-radius: 8px; color: #888;">
+        <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time trading monitor with predictive analysis</p>
+        <p style="margin: 5px 0; font-size: 1.1em; color: #4CAF50;">Currently Monitoring: EUR/USD Trading Pair</p>
+        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing 1-minute intervals for optimal trading signals</p> 
         <p>© 2025 Trading Monitor | Developed by Tadeo Sauceda</p>
         <p style="font-size: 0.8em;">Real-time market analysis and trading signals</p>
         <!-- <div style="margin-top: 10px;">
@@ -560,7 +559,7 @@
         let timeLeft = 60;  // 60 seconds = 1 minute
 
         function updateCountdown() {
-            const output = document.getElementById('output');
+            const countdownContainer = document.getElementById('countdown-container');
             // Create or update countdown element
             let countdownElement = document.getElementById('countdown');
             if (!countdownElement) {
@@ -571,8 +570,14 @@
             countdownElement.style.backgroundColor = '#312f2f';
             countdownElement.style.padding = '5px';
             countdownElement.style.textAlign = 'center';
-            countdownElement.style.borderBottom = '1px solid #444';
-            output.insertBefore(countdownElement, output.firstChild);
+            countdownElement.style.borderBottom = '1px solid #3fff00';
+            countdownElement.style.height = '30px';
+            countdownElement.style.fontSize = '1.2em';
+            countdownElement.style.fontWeight = 'bold';
+            countdownElement.style.zIndex = '1000';
+            countdownElement.style.color = '#b1b1b1';
+
+            countdownContainer.insertBefore(countdownElement, countdownContainer.firstChild);
             }
             countdownElement.innerHTML = `Auto-clear in: ${timeLeft}s`;
             countdownElement.style.color = timeLeft <= 10 ? '#f44336' : '#fff';
