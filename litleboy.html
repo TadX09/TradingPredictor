@@ -348,10 +348,10 @@
             // Add hold condition
             const getPredictionClass = (pred) => {
             switch(pred) {
-                case 'buy': return 'buy-signal';
-                case 'sell': return 'sell-signal';
-                case 'hold': return 'hold-signal';
-                default: return '';
+            case 'buy': return 'buy-signal';
+            case 'sell': return 'sell-signal';
+            case 'hold': return 'hold-signal';
+            default: return '';
             }
             };
 
@@ -367,10 +367,10 @@
 
             const getPredictionEmoji = (pred) => {
             switch(pred) {
-                case 'buy': return '📈';
-                case 'sell': return '📉';
-                case 'hold': return '⏸️';
-                default: return '❓';
+            case 'buy': return '📈';
+            case 'sell': return '📉';
+            case 'hold': return '⏸️';
+            default: return '❓';
             }
             };
 
@@ -379,7 +379,12 @@
             <div class="card-header">
             <div class="timestamp" style="font-size: 0.8em;">🕒 ${new Date().toLocaleString()}</div>
             <div class="price-info">
-            <span class="price-value">$${prediction.price.toFixed(4)}</span>
+            <span class="price-value">$${prediction.price.toFixed(6)}</span>
+            <span class="confidence-badge" style="color: ${
+                confidenceLevel >= 70 ? '#4CAF50' :  // Green for high confidence
+                confidenceLevel >= 40 ? '#FFC107' :  // Yellow for medium confidence
+                '#f44336'                           // Red for low confidence
+            }">${confidenceLevel.toFixed(1)}%</span>
             </div>
             </div>
             <div class="main-prediction ${predictionClass}">
@@ -389,7 +394,7 @@
             <div class="confidence">
             <div class="confidence-wrapper">
             <div class="confidence-bar" style="width: ${confidenceLevel}%; background: ${getConfidenceColor(confidenceLevel)}">
-            <span class="confidence-value">${confidenceLevel.toFixed(1)}%</span>
+            <span class="confidence-value" style="color: #000000; font-weight: bold;">${confidenceLevel.toFixed(1)}%</span>
             </div>
             </div>
             </div>
@@ -448,6 +453,15 @@
             align-items: center;
             margin-bottom: 10px;
             }
+            .confidence-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+            font-size: 1.1em;
+            color: rgb(255 255 255);
+            font-weight: bold;
+            }
             .price-value {
             font-size: 1.2em;
             color: #2196F3;
@@ -496,8 +510,8 @@
             right: 8px;
             top: 50%;
             transform: translateY(-50%);
-            color: white;
             font-size: 0.8em;
+            font-weight: bold;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             }
             .indicators-grid {
