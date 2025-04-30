@@ -71,17 +71,23 @@
 <body>
 
     <h1 style="color: #4CAF50; text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);">Trading Monitor</h1>
-    <div class="controls" style="background: #2a2a2a; padding: 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+    <div class="controls" style="background:#2a2a2a;padding:10px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
         <button onclick="onDemandPrediction()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Get Prediction</button>
         <button onclick="toggleMonitoring()" id="monitorBtn" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Start Monitoring</button>
         <button onclick="clearOutput()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Clear Console</button>
+        <select id="intervalSelect" onchange="updateInterval()" style="padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444;">
+            <option value="1m">1 Minute</option>
+            <option value="5m">5 Minutes</option>
+            <option value="15m">15 Minutes</option>
+        </select>
+
     </div>
     <div id="countdown-container"></div>
     <div id="output" style="overflow-y: auto; height: calc(100vh - 250px); margin-bottom: 20px;"></div>
     <footer style="text-align: center; padding: 20px; background: #2a2a2a; margin-top: 20px; border-radius: 8px; color: #888;">
         <p style="margin: 5px 0; font-size: 0.9em; color: #888;">A real-time trading monitor with predictive analysis</p>
         <p style="margin: 5px 0; font-size: 1.1em; color: #4CAF50;">Currently Monitoring: EUR/USD Trading Pair</p>
-        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing 1-minute intervals for optimal trading signals</p> 
+        <p style="margin: 5px 0; font-size: 0.8em; color: #ffeb3b;">Analyzing intervals for optimal trading signals</p> 
         <p>© 2025 Trading Monitor | Developed by Tadeo Sauceda</p>
         <p style="font-size: 0.8em;">Real-time market analysis and trading signals</p>
         <!-- <div style="margin-top: 10px;">
@@ -318,9 +324,12 @@
         }
         }
         // Initialize predictor
+
+        
+        
         const predictor = new TradingPredictor(
-            '1m', 
-            'EURUSDT',
+            document.getElementById('intervalSelect').value || '1m', // Use selected interval or default to 1m
+            'EURUSDT', 
             'your-api-key',
             'your-api-secret'
         );
@@ -336,6 +345,12 @@
             if (prediction) {
                 displayPrediction(prediction);
             }
+        }
+
+        function updateInterval() {
+            const interval = document.getElementById('intervalSelect').value;
+            predictor.interval = interval;
+            log(`Interval updated to ${interval}`, 'blue');
         }
 
         function displayPrediction(prediction) {
@@ -556,115 +571,127 @@
 
         let monitoringInterval;
         let countdownInterval;
-        let timeLeft = 60;  // 60 seconds = 1 minute
+        let timeLeft;  // Will be set based on selected interval
+
+        function getIntervalInSeconds() {
+            const interval = document.getElementById('intervalSelect').value;
+            switch(interval) {
+                case '1m': return 60;
+                case '5m': return 300;
+                case '15m': return 900;
+                default: return 60;
+            }
+        }
 
         function updateCountdown() {
             const countdownContainer = document.getElementById('countdown-container');
-            // Create or update countdown element
             let countdownElement = document.getElementById('countdown');
             if (!countdownElement) {
-            countdownElement = document.createElement('div');
-            countdownElement.id = 'countdown';
-            countdownElement.style.position = 'sticky';
-            countdownElement.style.top = '0';
-            countdownElement.style.backgroundColor = '#312f2f';
-            countdownElement.style.padding = '5px';
-            countdownElement.style.textAlign = 'center';
-            countdownElement.style.borderBottom = '1px solid #3fff00';
-            countdownElement.style.height = '30px';
-            countdownElement.style.fontSize = '1.2em';
-            countdownElement.style.fontWeight = 'bold';
-            countdownElement.style.zIndex = '1000';
-            countdownElement.style.color = '#b1b1b1';
-
-            countdownContainer.insertBefore(countdownElement, countdownContainer.firstChild);
+                countdownElement = document.createElement('div');
+                countdownElement.id = 'countdown';
+                countdownElement.style.position = 'sticky';
+                countdownElement.style.top = '0';
+                countdownElement.style.backgroundColor = '#312f2f';
+                countdownElement.style.padding = '5px';
+                countdownElement.style.textAlign = 'center';
+                countdownElement.style.borderBottom = '1px solid #3fff00';
+                countdownElement.style.height = '30px';
+                countdownElement.style.fontSize = '1.2em';
+                countdownElement.style.fontWeight = 'bold';
+                countdownElement.style.zIndex = '1000';
+                countdownElement.style.color = '#b1b1b1';
+                countdownContainer.insertBefore(countdownElement, countdownContainer.firstChild);
             }
-            countdownElement.innerHTML = `Auto-clear in: ${timeLeft}s`;
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownElement.innerHTML = `⏰ ${minutes}:${seconds.toString().padStart(2, '0')}`;
             countdownElement.style.color = timeLeft <= 10 ? '#f44336' : '#fff';
 
             timeLeft--;
             if (timeLeft < 0) {
-            clearOutput();
-            timeLeft = 60;  // Reset timer
-            // Recreate countdown element after clear
-            updateCountdown();
+                clearOutput();
+                timeLeft = getIntervalInSeconds();
+                updateCountdown();
             }
         }
 
         function toggleMonitoring() {
             const btn = document.getElementById('monitorBtn');
             if (predictor.monitoring) {
-            predictor.monitoring = false;
-            clearInterval(monitoringInterval);
-            clearInterval(countdownInterval);
-            btn.textContent = 'Start Monitoring';
-            
-            showAndroidToast("Monitoring stopped");
-            log('Monitoring stopped', 'red');
-            btn.style.background = '#2a2a2a';
-
-            // Remove countdown element when stopping
-            const countdownElement = document.getElementById('countdown');
-            if (countdownElement) {
-                countdownElement.remove();
-            }
-            } else {
-            predictor.monitoring = true;
-            showAndroidToast("Monitoring started");
-            log('Monitoring started', 'green');
-            btn.innerHTML = '<span class="spinner"></span> Monitoring...';
-            btn.style.background = '#4CAF50';
-            
-            // Initialize countdown
-            timeLeft = 60;
-            updateCountdown();
-            countdownInterval = setInterval(updateCountdown, 1000);
-            
-            // Add loading spinner style if not already present
-            if (!document.querySelector('style#spinnerStyle')) {
-                const style = document.createElement('style');
-                style.id = 'spinnerStyle';
-                style.textContent = `
-                .spinner {
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                border: 2px solid #ffffff;
-                border-top: 2px solid transparent;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin-right: 5px;
-                }
-                @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-                }`;
-                document.head.appendChild(style);
-            }
-
-            monitoringInterval = setInterval(async () => {
-                log('🔄 Checking for signals...', 'blue');
+                predictor.monitoring = false;
+                clearInterval(monitoringInterval);
+                clearInterval(countdownInterval);
+                document.getElementById('intervalSelect').disabled = false;
+                btn.textContent = 'Start Monitoring';
                 
-                const prediction = await predictor.getPrediction();
-                if (prediction && prediction.confidence > 0.35 && prediction.prediction !== 'hold') {
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('Trading Signal', {
-                            body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
-                        });
-                    }
-                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
-                    audio.play();
-                    displayPrediction(prediction);
-                    showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
-                } else {
-                    displayPrediction(prediction);
+                showAndroidToast("Monitoring stopped");
+                log('Monitoring stopped', 'red');
+                btn.style.background = '#2a2a2a';
+
+                const countdownElement = document.getElementById('countdown');
+                if (countdownElement) {
+                    countdownElement.remove();
                 }
-            }, 10000);
+            } else {
+                predictor.monitoring = true;
+                document.getElementById('intervalSelect').disabled = true;
+                showAndroidToast("Monitoring started");
+                log('Monitoring started', 'green');
+                btn.innerHTML = '<span class="spinner"></span> Monitoring...';
+                btn.style.background = '#4CAF50';
+                
+                // Initialize countdown based on selected interval
+                timeLeft = getIntervalInSeconds();
+                updateCountdown();
+                countdownInterval = setInterval(updateCountdown, 1000);
+                
+                // Add spinner style
+                if (!document.querySelector('style#spinnerStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'spinnerStyle';
+                    style.textContent = `
+                        .spinner {
+                            display: inline-block;
+                            width: 12px;
+                            height: 12px;
+                            border: 2px solid #ffffff;
+                            border-top: 2px solid transparent;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                            margin-right: 5px;
+                        }
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }`;
+                    document.head.appendChild(style);
+                }
+
+                const interval = Math.floor(getIntervalInSeconds() * 1000 / 6); // Convert to ms and divide by 6 cycles
+                console.log(`Interval set to ${interval} ms`);
+                monitoringInterval = setInterval(async () => {
+                    log('🔄 Checking for signals...', 'blue');
+                    
+                    const prediction = await predictor.getPrediction();
+                    if (prediction && prediction.confidence > 0.35 && prediction.prediction !== 'hold') {
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification('Trading Signal', {
+                                body: `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`
+                            });
+                        }
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PurWcHEj+S1/LMeigJJHfH8N2QQAoUXrTp66hVDgtHn+DwsGEGHTqO1fPPcCoMIXXH8t+TPgoWXrLq7KpXDgxBnODysWIGHjmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTQcysNInTH89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcysNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBnODysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIGHTmL1PTRcyoNI3TG89+TPwoXXrLq7KpXDgxBm+DysWIG');
+                        audio.play();
+                        displayPrediction(prediction);
+                        showNotificationAndroid('Trading Signal', `${prediction.prediction.toUpperCase()} signal detected with ${prediction.confidence * 100}% confidence`);
+                    } else {
+                        displayPrediction(prediction);
+                    }
+                }, interval);
             }
             
-            // Request notification permission if not granted
             if ('Notification' in window && Notification.permission !== 'granted') {
-            Notification.requestPermission();
+                Notification.requestPermission();
             }
         }
 
