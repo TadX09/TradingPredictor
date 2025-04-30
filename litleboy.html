@@ -66,21 +66,83 @@
                 min-height: 300px;
             }
         }
+        .accordion-container {
+            margin-bottom: 10px;
+        }
+        
+        .accordion-header {
+            cursor: pointer;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #2a2a2a, #383838);
+           
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            /* transition: max-height 0.3s ease-out; */
+            transition: max-height 0.3s ease-in-out;
+            display: flex;
+            max-height: 165px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .accordion-content.active {
+            max-height: 500px;
+            padding-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            footer {
+                padding: 10px !important;
+            }
+            
+            footer p {
+                margin: 2px 0 !important;
+                font-size: 0.8em !important;
+            }
+            
+            footer p:not(:first-child):not(:last-child) {
+                display: none;
+            }
+        }
+        @media (max-width: 600px) {
+            .accordion-header {
+                display: block !important;
+            }
+            .accordion-content {
+                max-height: 0 !important;
+                overflow: hidden;
+            }
+            .accordion-content.active {
+                max-height: 500px !important;
+            }
+        }
     </style>    
 </head>
 <body>
 
     <h1 style="color: #4CAF50; text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);">Trading Monitor</h1>
-    <div class="controls" style="background:#2a2a2a;padding:10px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
-        <button onclick="onDemandPrediction()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Get Prediction</button>
-        <button onclick="toggleMonitoring()" id="monitorBtn" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Start Monitoring</button>
-        <button onclick="clearOutput()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Clear Console</button>
-        <select id="intervalSelect" onchange="updateInterval()" style="padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444;">
-            <option value="1m">1 Minute</option>
-            <option value="5m">5 Minutes</option>
-            <option value="15m">15 Minutes</option>
-        </select>
-
+    <div class="controls accordion-container" style="background:#2a2a2a;padding:10px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+        <div class="accordion-header" onclick="toggleAccordion()" style="display: none;">
+            Trading Controls ▼
+        </div>
+        <div class="accordion-content" style="max-height: none; display: flex;">
+            <button onclick="onDemandPrediction()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Get Prediction</button>
+            <button onclick="toggleMonitoring()" id="monitorBtn" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);margin: 10px 0px 10px 0px;">Start Monitoring</button>
+            <button onclick="clearOutput()" style="border-radius: 8px; transition: all 0.3s ease; background: linear-gradient(145deg, #2a2a2a, #383838);">Clear Console</button>
+            <select id="intervalSelect" onchange="updateInterval()" style="padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444;  align-items: center;justify-content: center;margin: 10px 0px 10px 0px;">
+                <option value="1m">1 Minute</option>
+                <option value="5m">5 Minutes</option>
+                <option value="15m">15 Minutes</option>
+            </select>
+        </div>
     </div>
     <div id="countdown-container"></div>
     <div id="output" style="overflow-y: auto; height: calc(100vh - 250px); margin-bottom: 20px;"></div>
@@ -323,10 +385,12 @@
             };
         }
         }
-        // Initialize predictor
+       
+        // Initialize Menu
+        toggleAccordion();
+        toggleAccordion();
 
-        
-        
+         // Initialize predictor
         const predictor = new TradingPredictor(
             document.getElementById('intervalSelect').value || '1m', // Use selected interval or default to 1m
             'EURUSDT', 
@@ -338,6 +402,59 @@
             const output = document.getElementById('output');
             output.innerHTML += `<div class="${color}">${message}</div>`;
             output.scrollTop = output.scrollHeight;
+        }
+
+        function toggleAccordion() {
+            // Only apply accordion functionality for mobile screens
+            if (window.innerWidth <= 600) {
+                const content = document.querySelector('.accordion-content');
+                const header = document.querySelector('.accordion-header');
+                
+                // Show header only on mobile
+                header.style.display = 'block';
+                
+                const isExpanding = !content.classList.contains('active');
+
+                content.style.transition = 'max-height 0.3s ease-in-out';
+                
+                if (isExpanding) {
+                    content.style.display = 'flex';
+                    const height = content.scrollHeight;
+                    content.style.maxHeight = '0px';
+                    content.offsetHeight; // Force reflow
+                    content.style.maxHeight = height + 'px';
+                    content.classList.add('active');
+                    header.textContent = 'Trading Controls ▼';
+                } else {
+                    content.style.maxHeight = '0px';
+                    content.classList.remove('active');
+                    header.textContent = 'Trading Controls ►';
+                    
+                    content.addEventListener('transitionend', function handler() {
+                        if (!content.classList.contains('active')) {
+                            content.style.display = 'none';
+                        }
+                        content.removeEventListener('transitionend', handler);
+                    });
+                }
+            } else {
+                // For desktop, always show content without accordion
+                const content = document.querySelector('.accordion-content');
+                const header = document.querySelector('.accordion-header');
+                
+                header.style.display = 'none';
+                content.style.display = 'flex';
+                content.style.maxHeight = 'none';
+                content.classList.add('active');
+            }
+        }
+
+        // Open accordion by default on desktop
+        if (window.innerWidth > 600) {
+            const content = document.querySelector('.accordion-content');
+            content.style.display = 'flex';
+            content.style.maxHeight = content.scrollHeight + 'px';
+            content.classList.add('active');
         }
 
         async function onDemandPrediction() {
@@ -376,7 +493,7 @@
             const getConfidenceColor = (level) => {
             if (level >= 70) return 'linear-gradient(90deg, #4CAF50, #81C784)'; // Green
             if (level >= 40) return 'linear-gradient(90deg, #FFC107, #FFD54F)'; // Yellow
-            return 'linear-gradient(90deg, #f44336, #E57373)'; // Red
+            return 'linear-gradient(90deg, #f44336, #E57373)'; // Red  
             };
 
             const getPredictionEmoji = (pred) => {
@@ -388,16 +505,22 @@
             }
             };
 
+            // Remove any existing highlight class
+            const existingCards = document.querySelectorAll('.prediction-card');
+            existingCards.forEach(card => {
+            card.classList.remove('latest-card');
+            });
+
             const predictionCard = `
-            <div class="prediction-card ${predictionClass}">
+            <div class="prediction-card ${predictionClass} latest-card">
             <div class="card-header">
             <div class="timestamp" style="font-size: 0.8em;">🕒 ${new Date().toLocaleString()}</div>
             <div class="price-info">
             <span class="price-value">$${prediction.price.toFixed(6)}</span>
             <span class="confidence-badge" style="color: ${
-                confidenceLevel >= 70 ? '#4CAF50' :  // Green for high confidence
-                confidenceLevel >= 40 ? '#FFC107' :  // Yellow for medium confidence
-                '#f44336'                           // Red for low confidence
+            confidenceLevel >= 70 ? '#4CAF50' :  // Green for high confidence
+            confidenceLevel >= 40 ? '#FFC107' :  // Yellow for medium confidence
+            '#f44336'                           // Red for low confidence
             }">${confidenceLevel.toFixed(1)}%</span>
             </div>
             </div>
@@ -454,7 +577,30 @@
                0 2px 8px rgba(255, 255, 255, 0.1),
                0 -2px 8px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s, box-shadow 0.2s;
+            animation: cardEnter 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
             }
+
+            .latest-card {
+            background: linear-gradient(145deg, #2d2d2d 0%, #3a3a3a 100%) !important;
+            border: 1px solid #4CAF50;
+            }
+
+            @keyframes cardEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            60% {
+                transform: translateY(-5px) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            }
+
             .prediction-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5),
